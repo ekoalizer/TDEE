@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator TDEE & Kalori Harian</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Menyembunyikan scrollbar untuk tampilan app-like yang bersih */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-800 antialiased selection:bg-brand-500 selection:text-white flex justify-center">
+
+    <!-- Mobile App Shell Container -->
+    <div class="w-full max-w-md min-h-screen bg-slate-50 shadow-2xl flex flex-col relative overflow-x-hidden pb-24">
+        
+        <!-- Sticky Top App Bar -->
+        <nav class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200/70 px-5 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 text-white flex items-center justify-center shadow-md shadow-brand-500/20">
+                    <i class="fa-solid fa-fire-flame-curved text-base"></i>
+                </div>
+                <div>
+                    <h1 class="font-display font-bold text-slate-900 text-sm leading-none">FitCalc Pro</h1>
+                    <span class="text-[11px] text-slate-500 font-medium">TDEE & Diet Planner</span>
+                </div>
+            </div>
+            <button type="button" onclick="switchTab('guide')" class="text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-full transition flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-question"></i> Panduan
+            </button>
+        </nav>
+
+        <!-- Konten Utama -->
+        <main class="px-4 pt-4 flex-grow space-y-5">
+            
+            <!-- TAB 1: KALKULATOR & HASIL -->
+            <div id="tab-calculator" class="space-y-5">
+                
+                <!-- Banner Ringkas App Style -->
+                <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 rounded-3xl p-5 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-brand-500/20 rounded-full blur-xl"></div>
+                    <div class="relative z-10">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 text-emerald-300 text-[11px] font-semibold mb-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Gratis & Akurat
+                        </span>
+                        <h2 class="font-display text-lg font-bold leading-snug mb-1">
+                            Cek Kebutuhan Kalori Harianmu
+                        </h2>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Isi data di bawah ini untuk mengetahui angka kalori pas buat diet atau naikin berat badan.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Card Form Kalkulator -->
+                <section class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200/80">
+                    <form id="tdeeForm" class="space-y-4">
+                        
+                        <!-- Nama -->
+                        <div>
+                            <label for="userName" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                                Nama Panggilan
+                            </label>
+                            <div class="relative">
+                                <i class="fa-regular fa-user absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                                <input type="text" id="userName" placeholder="Masukkan namamu..." required
+                                    class="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50 border border-slate-200/90 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                            </div>
+                        </div>
+
+                        <!-- Jenis Kelamin (Segmented Control Style) -->
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                                Jenis Kelamin
+                            </label>
+                            <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="gender" value="male" class="peer sr-only" checked>
+                                    <div class="py-2.5 px-3 rounded-xl text-center text-slate-500 peer-checked:bg-white peer-checked:text-slate-900 peer-checked:shadow-sm transition flex items-center justify-center gap-2 font-semibold text-xs">
+                                        <i class="fa-solid fa-mars text-blue-500 text-sm"></i> Pria
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="gender" value="female" class="peer sr-only">
+                                    <div class="py-2.5 px-3 rounded-xl text-center text-slate-500 peer-checked:bg-white peer-checked:text-slate-900 peer-checked:shadow-sm transition flex items-center justify-center gap-2 font-semibold text-xs">
+                                        <i class="fa-solid fa-venus text-pink-500 text-sm"></i> Wanita
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Usia, Berat, Tinggi (Grid 3 Kolom App Style) -->
+                        <div class="grid grid-cols-3 gap-2.5">
+                            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 focus-within:border-brand-500 focus-within:bg-white transition">
+                                <label for="age" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                                    Usia
+                                </label>
+                                <div class="flex items-baseline">
+                                    <input type="number" id="age" min="15" max="100" placeholder="25" required
+                                        class="w-full bg-transparent text-base font-display font-bold text-slate-800 focus:outline-none">
+                                    <span class="text-[11px] font-medium text-slate-400">thn</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 focus-within:border-brand-500 focus-within:bg-white transition">
+                                <label for="weight" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                                    Berat
+                                </label>
+                                <div class="flex items-baseline">
+                                    <input type="number" id="weight" min="30" max="250" step="0.1" placeholder="65" required
+                                        class="w-full bg-transparent text-base font-display font-bold text-slate-800 focus:outline-none">
+                                    <span class="text-[11px] font-medium text-slate-400">kg</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 focus-within:border-brand-500 focus-within:bg-white transition">
+                                <label for="height" class="block text-[10px] font-bold uppercase text-slate-400 mb-1">
+                                    Tinggi
+                                </label>
+                                <div class="flex items-baseline">
+                                    <input type="number" id="height" min="100" max="250" placeholder="170" required
+                                        class="w-full bg-transparent text-base font-display font-bold text-slate-800 focus:outline-none">
+                                    <span class="text-[11px] font-medium text-slate-400">cm</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tingkat Aktivitas Harian -->
+                        <div>
+                            <label for="activity" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                                Aktivitas Harian
+                            </label>
+                            <div class="relative">
+                                <select id="activity" required
+                                    class="w-full appearance-none px-4 py-3.5 pr-10 rounded-2xl bg-slate-50 border border-slate-200/90 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                                    <option value="1.2">Jarang Olahraga (Kerja duduk, rebahan)</option>
+                                    <option value="1.375">Aktivitas Ringan (Olahraga 1-3x/minggu)</option>
+                                    <option value="1.55" selected>Aktivitas Sedang (Olahraga 3-5x/minggu)</option>
+                                    <option value="1.725">Aktivitas Berat (Olahraga 6-7x/minggu)</option>
+                                    <option value="1.9">Sangat Berat (Atlet / Pekerja fisik berat)</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down absolute right-4 top-4 text-slate-400 text-xs pointer-events-none"></i>
+                            </div>
+                        </div>
+
+                        <!-- Tujuan Utama -->
+                        <div>
+                            <label for="goal" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                                Target / Tujuanmu
+                            </label>
+                            <div class="relative">
+                                <select id="goal" required
+                                    class="w-full appearance-none px-4 py-3.5 pr-10 rounded-2xl bg-slate-50 border border-slate-200/90 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition">
+                                    <option value="cut">📉 Turunkan Berat Badan (Defisit Kalori)</option>
+                                    <option value="maintain">⚖️ Jaga Berat Badan Ideal (Maintenance)</option>
+                                    <option value="bulk">📈 Naikkan Berat / Massa Otot (Surplus)</option>
+                                </select>
+                                <i class="fa-solid fa-chevron-down absolute right-4 top-4 text-slate-400 text-xs pointer-events-none"></i>
+                            </div>
+                        </div>
+
+                        <!-- Tombol Hitung -->
+                        <button type="submit" 
+                            class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-brand-600 to-emerald-500 hover:from-brand-700 hover:to-emerald-600 active:scale-[0.98] text-white font-display font-bold text-sm shadow-lg shadow-brand-500/25 transition flex items-center justify-center gap-2 mt-2">
+                            <i class="fa-solid fa-bolt"></i> Hitung Kalori Sekarang
+                        </button>
+                    </form>
+                </section>
+
+                <!-- Area Hasil Perhitungan -->
+                <section id="resultSection" class="hidden space-y-4 animate-slide-up">
+                    
+                    <!-- Kartu Utama Hasil TDEE -->
+                    <div class="bg-slate-900 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
+                        <div class="absolute -right-8 -top-8 w-36 h-36 bg-brand-500/25 rounded-full blur-2xl"></div>
+                        
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-slate-400 text-[11px] uppercase tracking-wider font-bold">
+                                Pembakaran Harian (TDEE)
+                            </span>
+                            <span class="px-2.5 py-0.5 rounded-full bg-brand-500/20 text-brand-400 text-[11px] font-semibold">
+                                Hasil Analisa
+                            </span>
+                        </div>
+
+                        <div class="flex items-baseline gap-2 mb-3">
+                            <span id="tdeeValue" class="font-display text-4xl font-extrabold text-white tracking-tight">0</span>
+                            <span class="text-sm font-medium text-brand-400">kkal / hari</span>
+                        </div>
+
+                        <div class="bg-white/10 backdrop-blur-sm p-3.5 rounded-2xl text-xs text-slate-200 leading-relaxed flex items-start gap-2.5">
+                            <i class="fa-solid fa-circle-info text-brand-400 mt-0.5"></i>
+                            <p>Tubuhmu membakar sekitar <strong id="tdeeTextRepeat" class="text-white">0</strong> kalori setiap hari untuk beraktivitas.</p>
+                        </div>
+                    </div>
+
+                    <!-- Rekomendasi Target Kalori -->
+                    <div class="bg-white border border-brand-200 rounded-3xl p-5 shadow-sm">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-10 h-10 rounded-2xl bg-brand-100 text-brand-600 flex items-center justify-center text-base">
+                                <i class="fa-solid fa-bullseye"></i>
+                            </div>
+                            <div>
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-brand-600 block">Rekomendasi Harian</span>
+                                <h3 class="font-display font-bold text-slate-900 text-sm" id="goalTitle">Target Kalorimu</h3>
+                            </div>
+                        </div>
+                        <div class="bg-brand-50/70 rounded-2xl p-4 mb-3 flex items-baseline justify-between">
+                            <span class="text-xs font-semibold text-slate-600">Konsumsi Harian:</span>
+                            <div>
+                                <span id="targetCalories" class="font-display text-2xl font-extrabold text-brand-700">0</span>
+                                <span class="text-xs font-bold text-brand-800">kkal</span>
+                            </div>
+                        </div>
+                        <p id="goalExplanation" class="text-xs text-slate-600 leading-relaxed">
+                            Penjelasan target kalori akan muncul di sini.
+                        </p>
+                    </div>
+
+                    <!-- Breakdown BMR & Protein -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm">
+                            <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center mb-2.5 text-xs">
+                                <i class="fa-solid fa-battery-half"></i>
+                            </div>
+                            <span class="text-[11px] text-slate-400 font-bold uppercase block">Kalori Dasar (BMR)</span>
+                            <div class="my-1">
+                                <span id="bmrValue" class="font-display text-xl font-extrabold text-slate-800">0</span>
+                                <span class="text-xs text-slate-500 font-medium">kkal</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 leading-snug">
+                                Batas minimal kalori tubuh. Jangan makan di bawah angka ini!
+                            </p>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm">
+                            <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center mb-2.5 text-xs">
+                                <i class="fa-solid fa-drumstick-bite"></i>
+                            </div>
+                            <span class="text-[11px] text-slate-400 font-bold uppercase block">Target Protein</span>
+                            <div class="my-1">
+                                <span id="proteinValue" class="font-display text-xl font-extrabold text-slate-800">0</span>
+                                <span class="text-xs text-slate-500 font-medium">gram</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 leading-snug">
+                                Bantu kenyang lebih lama & jaga massa otot tetap kencang.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Card CTA Konsultasi WhatsApp -->
+                    <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-5 text-white shadow-lg shadow-emerald-500/20">
+                        <div class="flex items-start gap-3.5 mb-4">
+                            <div class="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl shrink-0">
+                                <i class="fa-brands fa-whatsapp"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-display font-bold text-base leading-tight mb-1">
+                                    Konsultasikan Hasilmu!
+                                </h4>
+                                <p class="text-xs text-emerald-50 leading-relaxed">
+                                    Kirim hasil hitungan otomatis ke WhatsApp saya untuk dibantu atur pola makan yang pas.
+                                </p>
+                            </div>
+                        </div>
+                        <button id="waButton" type="button"
+                            class="w-full py-3.5 px-5 rounded-2xl bg-white text-emerald-700 hover:bg-emerald-50 active:scale-[0.98] font-display font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
+                            <span>Kirim ke WhatsApp Sekarang</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                </section>
+            </div>
+
+            <!-- TAB 2: PANDUAN & EDUKASI AWAM -->
+            <div id="tab-guide" class="hidden space-y-4 animate-slide-up">
+                <div class="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm">
+                    <h2 class="font-display font-bold text-slate-900 text-base mb-1">
+                        Kamus Diet & Kalori
+                    </h2>
+                    <p class="text-xs text-slate-500 mb-4">
+                        Penjelasan simpel biar kamu paham cara kerja tubuhmu.
+                    </p>
+
+                    <div class="space-y-3">
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                            <h3 class="font-display font-bold text-slate-800 text-sm mb-1.5 flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-brand-100 text-brand-700 flex items-center justify-center text-xs">1</span>
+                                Apa itu BMR & TDEE?
+                            </h3>
+                            <p class="text-xs text-slate-600 leading-relaxed mb-2">
+                                <strong>BMR:</strong> Ibarat mobil yang mesinnya menyala tapi diam di garasi. Kalori yang dibakar tubuh cuma buat bernapas & jantung berdetak.
+                            </p>
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                <strong>TDEE:</strong> Ibarat mobil yang dipakai jalan keliling kota. Total kalori BMR ditambah semua aktivitas harianmu (jalan, kerja, olahraga).
+                            </p>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                            <h3 class="font-display font-bold text-slate-800 text-sm mb-1.5 flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-xs">2</span>
+                                Cara Turun Berat Badan
+                            </h3>
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                Lakukan <strong>Defisit Kalori</strong>: makan sekitar <strong>300 - 500 kkal lebih sedikit</strong> dari TDEE. Hindari diet ekstrem tidak makan nasi agar metabolisme tidak rusak.
+                            </p>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                            <h3 class="font-display font-bold text-slate-800 text-sm mb-1.5 flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs">3</span>
+                                Cara Naik Berat Badan
+                            </h3>
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                Lakukan <strong>Surplus Kalori</strong>: makan sekitar <strong>300 - 500 kkal lebih banyak</strong> dari TDEE. Perbanyak protein (ayam, telur, tempe) & olahraga beban agar jadi otot, bukan lemak perut.
+                            </p>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="switchTab('calculator')"
+                        class="w-full mt-5 py-3.5 px-5 rounded-2xl bg-slate-900 text-white font-display font-bold text-xs shadow-md transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-calculator"></i> Kembali ke Kalkulator
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Bottom Navigation Bar (Mobile App Style) -->
+        <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white/90 backdrop-blur-lg border-t border-slate-200/80 px-6 py-2.5 flex items-center justify-around z-40">
+            <button type="button" id="nav-calculator" onclick="switchTab('calculator')" class="flex flex-col items-center gap-1 text-brand-600 transition">
+                <div class="w-10 h-7 rounded-full bg-brand-50 flex items-center justify-center">
+                    <i class="fa-solid fa-calculator text-sm"></i>
+                </div>
+                <span class="text-[10px] font-bold">Kalkulator</span>
+            </button>
+
+            <button type="button" id="nav-guide" onclick="switchTab('guide')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600 transition">
+                <div class="w-10 h-7 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-book-open text-sm"></i>
+                </div>
+                <span class="text-[10px] font-semibold">Penjelasan</span>
+            </button>
+
+            <button type="button" onclick="directChatWA()" class="flex flex-col items-center gap-1 text-slate-400 hover:text-emerald-600 transition">
+                <div class="w-10 h-7 rounded-full flex items-center justify-center">
+                    <i class="fa-brands fa-whatsapp text-base text-emerald-500"></i>
+                </div>
+                <span class="text-[10px] font-semibold">Tanya WA</span>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Custom Toast Notification -->
+    <div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-md text-white text-xs font-medium px-4 py-3 rounded-2xl shadow-xl opacity-0 pointer-events-none transition-all duration-300 z-50 flex items-center gap-2.5 border border-white/10">
+        <i class="fa-solid fa-circle-info text-brand-400"></i>
+        <span id="toastMsg">Pesan notifikasi</span>
+    </div>
+
+    <script>
+        // =========================================================================
+        // NOMOR WHATSAPP ADMIN (085245518761 -> format internasional 6285245518761)
+        // =========================================================================
+        const NOMOR_WA_ADMIN = "6285245518761"; 
+
+        let latestCalculation = null;
+
+        // Fungsi Navigasi Tab ala Aplikasi Mobile
+        function switchTab(tabName) {
+            const calcTab = document.getElementById('tab-calculator');
+            const guideTab = document.getElementById('tab-guide');
+            const navCalc = document.getElementById('nav-calculator');
+            const navGuide = document.getElementById('nav-guide');
+
+            if (tabName === 'calculator') {
+                calcTab.classList.remove('hidden');
+                guideTab.classList.add('hidden');
+                
+                navCalc.classList.replace('text-slate-400', 'text-brand-600');
+                navCalc.querySelector('div').classList.add('bg-brand-50');
+                
+                navGuide.classList.replace('text-brand-600', 'text-slate-400');
+                navGuide.querySelector('div').classList.remove('bg-brand-50');
+            } else {
+                calcTab.classList.add('hidden');
+                guideTab.classList.remove('hidden');
+
+                navGuide.classList.replace('text-slate-400', 'text-brand-600');
+                navGuide.querySelector('div').classList.add('bg-brand-50');
+
+                navCalc.classList.replace('text-brand-600', 'text-slate-400');
+                navCalc.querySelector('div').classList.remove('bg-brand-50');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Fungsi Chat Langsung dari Bottom Bar jika user sudah/belum menghitung
+        function directChatWA() {
+            if (latestCalculation) {
+                document.getElementById('waButton').click();
+            } else {
+                const msg = encodeURIComponent("Halo Kak! Saya dari link Reel, mau tanya-tanya soal hitung kalori & program diet 😊");
+                window.open(`https://wa.me/${NOMOR_WA_ADMIN}?text=${msg}`, '_blank');
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.textContent = message;
+            toast.classList.remove('opacity-0', '-translate-y-2');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+            }, 3000);
+        }
+
+        // Event Listener saat Form disubmit
+        document.getElementById('tdeeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            try {
+                const name = document.getElementById('userName').value.trim() || "Kak";
+                const gender = document.querySelector('input[name="gender"]:checked').value;
+                const age = parseFloat(document.getElementById('age').value);
+                const weight = parseFloat(document.getElementById('weight').value);
+                const height = parseFloat(document.getElementById('height').value);
+                const activityMultiplier = parseFloat(document.getElementById('activity').value);
+                const activityText = document.getElementById('activity').options[document.getElementById('activity').selectedIndex].text;
+                const goal = document.getElementById('goal').value;
+
+                if (isNaN(age) || isNaN(weight) || isNaN(height)) {
+                    showToast("Mohon isi usia, berat, dan tinggi badan dengan benar.");
+                    return;
+                }
+
+                // Rumus Mifflin-St Jeor
+                let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+                bmr += (gender === 'male') ? 5 : -161;
+                bmr = Math.round(bmr);
+
+                const tdee = Math.round(bmr * activityMultiplier);
+
+                let targetCalories = tdee;
+                let goalTitle = "";
+                let goalExplanation = "";
+                let goalLabelWA = "";
+
+                if (goal === 'cut') {
+                    targetCalories = Math.max(bmr, tdee - 400);
+                    goalTitle = "Defisit Kalori (Turun BB)";
+                    goalLabelWA = "Menurunkan Berat Badan";
+                    goalExplanation = `Untuk turun berat badan sekitar 0,4 - 0,5 kg/minggu secara sehat, makanlah sekitar <strong>${targetCalories.toLocaleString('id-ID')} kkal/hari</strong> (dikurangi ~400 kkal dari TDEE).`;
+                } else if (goal === 'bulk') {
+                    targetCalories = tdee + 350;
+                    goalTitle = "Surplus Kalori (Naik BB)";
+                    goalLabelWA = "Menaikkan Berat Badan / Otot";
+                    goalExplanation = `Untuk naikkan berat badan dan massa otot tanpa banyak lemak, makanlah sekitar <strong>${targetCalories.toLocaleString('id-ID')} kkal/hari</strong> (ditambah ~350 kkal dari TDEE).`;
+                } else {
+                    targetCalories = tdee;
+                    goalTitle = "Maintenance (Jaga BB)";
+                    goalLabelWA = "Menjaga Berat Badan Ideal";
+                    goalExplanation = `Untuk menjaga berat badanmu saat ini agar tetap stabil, makanlah sesuai angka TDEE-mu yaitu <strong>${targetCalories.toLocaleString('id-ID')} kkal/hari</strong>.`;
+                }
+
+                const proteinGrams = Math.round(weight * 1.6);
+
+                document.getElementById('tdeeValue').textContent = tdee.toLocaleString('id-ID');
+                document.getElementById('tdeeTextRepeat').textContent = tdee.toLocaleString('id-ID');
+                document.getElementById('bmrValue').textContent = bmr.toLocaleString('id-ID');
+                document.getElementById('proteinValue').textContent = proteinGrams;
+                document.getElementById('goalTitle').textContent = goalTitle;
+                document.getElementById('targetCalories').textContent = targetCalories.toLocaleString('id-ID');
+                document.getElementById('goalExplanation').innerHTML = goalExplanation;
+
+                latestCalculation = {
+                    name,
+                    gender: gender === 'male' ? 'Pria' : 'Wanita',
+                    age,
+                    weight,
+                    height,
+                    activityText,
+                    goalLabelWA,
+                    bmr,
+                    tdee,
+                    targetCalories,
+                    proteinGrams
+                };
+
+                const resultSection = document.getElementById('resultSection');
+                resultSection.classList.remove('hidden');
+                
+                // Scroll halus ke hasil dengan offset header
+                setTimeout(() => {
+                    resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+
+            } catch (error) {
+                console.error("Terjadi kesalahan perhitungan:", error);
+                showToast("Terjadi kesalahan. Silakan periksa kembali input Anda.");
+            }
+        });
+
+        // Event Listener untuk Tombol WhatsApp
+        document.getElementById('waButton').addEventListener('click', function() {
+            if (!latestCalculation) {
+                showToast("Silakan hitung kalori terlebih dahulu.");
+                return;
+            }
+
+            const d = latestCalculation;
+
+            const pesanWA = 
+`Halo Kak! Saya baru saja menghitung TDEE dari link Reel, dan ingin konsultasi hasilnya 😊
+
+*DATA DIRI:*
+• Nama: ${d.name}
+• Jenis Kelamin: ${d.gender}
+• Usia: ${d.age} tahun
+• Berat / Tinggi: ${d.weight} kg / ${d.height} cm
+• Aktivitas: ${d.activityText}
+
+*HASIL PERHITUNGAN:*
+• BMR (Kalori Dasar): ${d.bmr} kkal
+• TDEE (Kalori Harian): *${d.tdee} kkal*
+• Tujuan: ${d.goalLabelWA}
+• Rekomendasi Kalori: *${d.targetCalories} kkal/hari*
+• Target Protein: ~${d.proteinGrams} gram/hari
+
+Boleh dibantu arahan pola makan atau program yang cocok untuk saya Kak? Terima kasih! 🙏`;
+
+            const encodedMessage = encodeURIComponent(pesanWA);
+            const waUrl = `https://wa.me/${NOMOR_WA_ADMIN}?text=${encodedMessage}`;
+
+            window.open(waUrl, '_blank');
+        });
+    </script>
+</body>
+</html>
